@@ -22,13 +22,13 @@ import threading
 # https://casecurity.org/2015/02/19/ssl-certificate-validity-periods-limited-to-39-months-starting-in-april/
 CERT_NOT_AFTER = 3 * 365 * 24 * 60 * 60
 
-CERTS_DIR = './ca/certs/'
+CERTS_DIR = "./ca/certs/"
 
-CERT_NAME = 'certauth sample CA'
+CERT_NAME = "certauth sample CA"
 
-DEF_HASH_FUNC = 'sha256'
+DEF_HASH_FUNC = "sha256"
 
-ROOT_CA = '!!root_ca'
+ROOT_CA = "!!root_ca"
 
 
 # =================================================================
@@ -43,12 +43,15 @@ class CertificateAuthority(object):
     in specified certs_dir and reused if previously created.
     """
 
-    def __init__(self, ca_name,
-                 ca_file_cache,
-                 cert_cache=None,
-                 cert_not_before=0,
-                 cert_not_after=CERT_NOT_AFTER,
-                 overwrite=False):
+    def __init__(
+        self,
+        ca_name,
+        ca_file_cache,
+        cert_cache=None,
+        cert_not_before=0,
+        cert_not_after=CERT_NOT_AFTER,
+        overwrite=False,
+    ):
 
         if isinstance(ca_file_cache, str):
             self.ca_file_cache = RootCACache(ca_file_cache)
@@ -98,18 +101,22 @@ class CertificateAuthority(object):
     def is_host_ip(self, host):
         try:
             # if py2.7, need to decode to unicode str
-            if hasattr(host, 'decode'):  #pragma: no cover
-                host = host.decode('ascii')
+            if hasattr(host, "decode"):  # pragma: no cover
+                host = host.decode("ascii")
 
             ipaddress.ip_address(host)
             return True
         except (ValueError, UnicodeDecodeError) as e:
             return False
 
-    def load_cert(self, host, overwrite=False,
-                              wildcard=False,
-                              wildcard_use_parent=False,
-                              include_cache_key=False):
+    def load_cert(
+        self,
+        host,
+        overwrite=False,
+        wildcard=False,
+        wildcard_use_parent=False,
+        include_cache_key=False,
+    ):
 
         is_ip = self.is_host_ip(host)
 
@@ -117,8 +124,8 @@ class CertificateAuthority(object):
             wildcard = False
 
         if wildcard and wildcard_use_parent:
-            host_parts = host.split('.', 1)
-            if len(host_parts) == 2 and '.' in host_parts[1]:
+            host_parts = host.split(".", 1)
+            if len(host_parts) == 2 and "." in host_parts[1]:
                 host = host_parts[1]
 
         cert_str = None
@@ -132,11 +139,9 @@ class CertificateAuthority(object):
 
         else:
             # if not cached, generate new root or host cert
-            cert, key = self.generate_host_cert(host,
-                                                self.ca_cert,
-                                                self.ca_key,
-                                                wildcard,
-                                                is_ip=is_ip)
+            cert, key = self.generate_host_cert(
+                host, self.ca_cert, self.ca_key, wildcard, is_ip=is_ip
+            )
 
             # Write cert + key
             buff = BytesIO()
@@ -151,28 +156,31 @@ class CertificateAuthority(object):
 
         else:
             cache_key = host
-            if hasattr(self.cert_cache, 'key_for_host'):
+            if hasattr(self.cert_cache, "key_for_host"):
                 cache_key = self.cert_cache.key_for_host(host)
 
             return cert, key, cache_key
 
-    def cert_for_host(self, host, overwrite=False,
-                                  wildcard=False):
+    def cert_for_host(self, host, overwrite=False, wildcard=False):
 
-        res = self.load_cert(host, overwrite=overwrite,
-                                   wildcard=wildcard,
-                                   wildcard_use_parent=False,
-                                   include_cache_key=True)
+        res = self.load_cert(
+            host,
+            overwrite=overwrite,
+            wildcard=wildcard,
+            wildcard_use_parent=False,
+            include_cache_key=True,
+        )
 
         return res[2]
 
-
-
     def get_wildcard_cert(self, cert_host, overwrite=False):
-        res = self.load_cert(cert_host, overwrite=overwrite,
-                                        wildcard=True,
-                                        wildcard_use_parent=True,
-                                        include_cache_key=True)
+        res = self.load_cert(
+            cert_host,
+            overwrite=overwrite,
+            wildcard=True,
+            wildcard_use_parent=True,
+            include_cache_key=True,
+        )
 
         return res[2]
 
@@ -208,30 +216,30 @@ class CertificateAuthority(object):
 
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(key)
-        cert.add_extensions([
-            crypto.X509Extension(b"basicConstraints",
-                                 True,
-                                 b"CA:TRUE, pathlen:0"),
-
-            crypto.X509Extension(b"keyUsage",
-                                 True,
-                                 b"keyCertSign, cRLSign"),
-
-            crypto.X509Extension(b"subjectKeyIdentifier",
-                                 False,
-                                 b"hash",
-                                 subject=cert),
-            ])
+        cert.add_extensions(
+            [
+                crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
+                crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+                crypto.X509Extension(
+                    b"subjectKeyIdentifier", False, b"hash", subject=cert
+                ),
+            ]
+        )
         cert.sign(key, hash_func)
 
         return cert, key
 
-    def generate_host_cert(self, host, root_cert, root_key,
-                           wildcard=False,
-                           hash_func=DEF_HASH_FUNC,
-                           is_ip=False):
+    def generate_host_cert(
+        self,
+        host,
+        root_cert,
+        root_key,
+        wildcard=False,
+        hash_func=DEF_HASH_FUNC,
+        is_ip=False,
+    ):
 
-        host = host.encode('utf-8')
+        host = host.encode("utf-8")
 
         # Generate key
         key = crypto.PKey()
@@ -249,21 +257,18 @@ class CertificateAuthority(object):
         cert.set_issuer(root_cert.get_subject())
         cert.set_pubkey(req.get_pubkey())
 
-        primary = b'DNS:' + host
+        primary = b"DNS:" + host
 
         if wildcard:
-            alt_hosts = primary + b', DNS:*.' + host
+            alt_hosts = primary + b", DNS:*." + host
 
         elif is_ip:
-            alt_hosts = b'IP:' + host + b', ' + primary
+            alt_hosts = b"IP:" + host + b", " + primary
 
         else:
             alt_hosts = primary
 
-        cert.add_extensions([
-            crypto.X509Extension(b'subjectAltName',
-                                 False,
-                                 alt_hosts)])
+        cert.add_extensions([crypto.X509Extension(b"subjectAltName", False, alt_hosts)])
 
         cert.sign(root_key, hash_func)
         return cert, key
@@ -290,23 +295,23 @@ class FileCache(object):
             os.makedirs(certs_dir)
 
     def key_for_host(self, host):
-        host = host.replace(':', '-')
-        return os.path.join(self.certs_dir, host) + '.pem'
+        host = host.replace(":", "-")
+        return os.path.join(self.certs_dir, host) + ".pem"
 
     def __setitem__(self, host, cert_string):
         filename = self.key_for_host(host)
         with self._lock:
-            with open(filename, 'wb') as fh:
+            with open(filename, "wb") as fh:
                 fh.write(cert_string)
                 self.modified = True
 
     def get(self, host):
         filename = self.key_for_host(host)
         try:
-            with open(filename, 'rb') as fh:
+            with open(filename, "rb") as fh:
                 return fh.read()
         except:
-            return b''
+            return b""
 
 
 # =================================================================
@@ -334,25 +339,37 @@ class LRUCache(OrderedDict):
 
 # =================================================================
 def main(args=None):
-    parser = ArgumentParser(description='Certificate Authority Cert Maker Tools')
+    parser = ArgumentParser(description="Certificate Authority Cert Maker Tools")
 
-    parser.add_argument('root_ca_cert',
-                        help='Path to existing or new root CA file')
+    parser.add_argument("root_ca_cert", help="Path to existing or new root CA file")
 
-    parser.add_argument('-c', '--certname', action='store', default=CERT_NAME,
-                        help='Name for root certificate')
+    parser.add_argument(
+        "-c",
+        "--certname",
+        action="store",
+        default=CERT_NAME,
+        help="Name for root certificate",
+    )
 
-    parser.add_argument('-n', '--hostname',
-                        help='Hostname certificate to create')
+    parser.add_argument("-n", "--hostname", help="Hostname certificate to create")
 
-    parser.add_argument('-d', '--certs-dir', default=CERTS_DIR,
-                        help='Directory for host certificates')
+    parser.add_argument(
+        "-d", "--certs-dir", default=CERTS_DIR, help="Directory for host certificates"
+    )
 
-    parser.add_argument('-f', '--force', action='store_true',
-                        help='Overwrite certificates if they already exist')
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Overwrite certificates if they already exist",
+    )
 
-    parser.add_argument('-w', '--wildcard_cert', action='store_true',
-                        help='add wildcard SAN to host: *.<host>, <host>')
+    parser.add_argument(
+        "-w",
+        "--wildcard_cert",
+        action="store_true",
+        help="add wildcard SAN to host: *.<host>, <host>",
+    )
 
     r = parser.parse_args(args=args)
 
@@ -370,10 +387,12 @@ def main(args=None):
     cert_cache = FileCache(r.certs_dir)
     ca_file_cache = RootCACache(root_cert)
 
-    ca = CertificateAuthority(ca_name=r.certname,
-                              ca_file_cache=ca_file_cache,
-                              cert_cache=cert_cache,
-                              overwrite=overwrite)
+    ca = CertificateAuthority(
+        ca_name=r.certname,
+        ca_file_cache=ca_file_cache,
+        cert_cache=cert_cache,
+        overwrite=overwrite,
+    )
 
     # Just creating the root cert
     if not hostname:
@@ -381,27 +400,25 @@ def main(args=None):
             print('Created new root cert: "' + root_cert + '"')
             return 0
         else:
-            print('Root cert "' + root_cert +
-                  '" already exists,' + ' use -f to overwrite')
+            print(
+                'Root cert "' + root_cert + '" already exists,' + " use -f to overwrite"
+            )
             return 1
 
     # Sign a certificate for a given host
     overwrite = r.force
-    ca.load_cert(hostname, overwrite=overwrite,
-                           wildcard=wildcard,
-                           wildcard_use_parent=False)
+    ca.load_cert(
+        hostname, overwrite=overwrite, wildcard=wildcard, wildcard_use_parent=False
+    )
 
     if cert_cache.modified:
-        print('Created new cert "' + hostname +
-              '" signed by root cert ' +
-              root_cert)
+        print('Created new cert "' + hostname + '" signed by root cert ' + root_cert)
         return 0
 
     else:
-        print('Cert for "' + hostname + '" already exists,' +
-              ' use -f to overwrite')
+        print('Cert for "' + hostname + '" already exists,' + " use -f to overwrite")
         return 1
 
 
-if __name__ == "__main__":  #pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main()
