@@ -20,19 +20,20 @@ class PyTest(TestCommand):
 
 setup(
     name='certauth',
-    version='1.2.1',
-    author='Ilya Kreymer',
-    author_email='ikreymer@gmail.com',
+    version='0.0.1',
+    author='Joel Castillo',
+    author_email='joelbcastillo@gmail.com',
     license='MIT',
     packages=find_packages(),
-    url='https://github.com/ikreymer/certauth',
-    description='Simple Certificate Authority for MITM proxies',
+    url='https://github.com/joelbcastillo/certauth',
+    description='Simple Certificate Authority',
     long_description=open('README.rst').read(),
     provides=[
         'certauth',
         ],
     install_requires=[
         'pyopenssl',
+        'cryptography',
         ],
     zip_safe=True,
     entry_points="""
@@ -46,8 +47,13 @@ setup(
         'pytest-cov',
     ],
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 1 - Planning',
+        'Environment :: Console',
         'Environment :: Web Environment',
+        'Framework :: Flask',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: System Administrators',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.2',
@@ -56,6 +62,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Topic :: Security',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
     ]
